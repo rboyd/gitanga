@@ -1,0 +1,7 @@
+(ns gitanga.core-test
+  (:use clojure.test
+        gitanga.core))
+
+(deftest a-test
+  (testing "FIXME, I fail."
+    (is (= 0 1))))
