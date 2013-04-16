@@ -2,7 +2,8 @@
   "Utility functions for gitanga"
   (:require [clojure.java.io :refer [input-stream]]
             [gloss.core :refer [defcodec string repeated ordered-map
-                                string-integer compile-frame header]])
+                                string-integer compile-frame header]]
+            [gitanga.time :refer [parse-date]])
   (:import (java.util.zip InflaterInputStream)) 
   (:import (org.apache.commons.io IOUtils)))
 
@@ -49,13 +50,27 @@
 (defcodec commit-parents
   (repeated (hex-obj-id "parent ") :prefix :none :delimiters ["author "]))
 
-(defcodec commit-contents
-  (ordered-map :type :commit-contents
-               :tree-obj-id (hex-obj-id "tree ")
-               :parents commit-parents
-               :author (string :utf-8 :delimiters ["\ncommitter "])
-               :committer (string :utf-8 :delimiters ["\n\n"])
-               :data (string :utf-8)))
+(defn extract-times
+  [commit-contents]
+  (let [{:keys [author committer]} commit-contents
+        extract-time #(-> (re-find #"[^>]+> (.*)" %) second)]
+    (merge commit-contents {:author    {:string    author
+                                        :date-time (-> (extract-time author)
+                                                       parse-date)}
+                            :committer {:string    committer
+                                        :date-time (-> (extract-time committer)
+                                                       parse-date)}})))
+
+(def commit-contents
+  (compile-frame
+    (ordered-map :type :commit-contents
+                 :tree-obj-id (hex-obj-id "tree ")
+                 :parents commit-parents
+                 :author (string :utf-8 :delimiters ["\ncommitter "])
+                 :committer (string :utf-8 :delimiters ["\n\n"])
+                 :data (string :utf-8))
+    identity
+    extract-times))
 
 (defcodec commit
   (ordered-map :type :commit
