@@ -6,4 +6,5 @@
   :dependencies [[org.clojure/clojure "1.4.0"]
                  [commons-io "1.4"]
                  [gloss "0.2.2-beta4"]
-                 [clj-time "0.5.0"]])
+                 [clj-time "0.5.0"]]
+  :profiles {:dev {:dependencies [[expectations "1.4.36"]]}})
